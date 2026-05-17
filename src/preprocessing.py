@@ -180,8 +180,7 @@ print(df.isnull().sum())
 
 df.to_csv(
     "data/processed/cleaned_heart_disease.csv",
-    index=False
-)
+    index=False)
 
 print("\nCleaned dataset saved successfully.")
 
