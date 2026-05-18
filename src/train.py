@@ -1,3 +1,8 @@
+import mlflow
+import mlflow.sklearn
+
+mlflow.set_tracking_uri("file:./mlruns")
+
 import os
 import yaml
 import joblib
