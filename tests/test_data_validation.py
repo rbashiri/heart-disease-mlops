@@ -1,14 +1,10 @@
 import pandas as pd
 
 
-def test_required_columns_exist():
-    """Check that required columns exist."""
+def test_expected_columns_present():
+    df = pd.read_csv("data/processed/cleaned_heart_disease.csv")
 
-    df = pd.read_csv(
-        "data/processed/cleaned_heart_disease.csv"
-    )
-
-    required_columns = [
+    expected_columns = [
         "age",
         "sex",
         "cp",
@@ -18,37 +14,22 @@ def test_required_columns_exist():
         "num"
     ]
 
-    for col in required_columns:
+    for col in expected_columns:
         assert col in df.columns
 
 
-def test_dataset_not_empty():
-    """Check dataset is not empty."""
-
-    df = pd.read_csv(
-        "data/processed/cleaned_heart_disease.csv"
-    )
-
-    assert len(df) > 0
-
-
-def test_target_values_valid():
-    """Check target values are valid."""
-
-    df = pd.read_csv(
-        "data/processed/cleaned_heart_disease.csv"
-    )
+def test_target_values_are_valid():
+    df = pd.read_csv("data/processed/cleaned_heart_disease.csv")
 
     valid_values = [0, 1, 2, 3, 4]
 
     assert df["num"].isin(valid_values).all()
 
 
-def test_age_values_positive():
-    """Check age values are positive."""
+def test_numeric_features_within_expected_ranges():
+    df = pd.read_csv("data/processed/cleaned_heart_disease.csv")
 
-    df = pd.read_csv(
-        "data/processed/cleaned_heart_disease.csv"
-    )
-
-    assert (df["age"] > 0).all()
+    assert df["age"].between(20, 100).all()
+    assert df["trestbps"].between(80, 250).all()
+    assert df["chol"].between(0, 700).all()
+    assert df["thalch"].between(50, 250).all()

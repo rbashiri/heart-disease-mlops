@@ -1,38 +1,75 @@
+import pytest
 import pandas as pd
-import os
-def test_cleaned_dataset_exists():
-    """Check that cleaned dataset file exists."""
+import numpy as np
 
-    file_path = "data/processed/cleaned_heart_disease.csv"
-
-    assert os.path.exists(file_path)
-
-
-def test_cleaned_dataset_not_empty():
-    """Check that cleaned dataset is not empty."""
-
-    df = pd.read_csv(
-        "data/processed/cleaned_heart_disease.csv"
-    )
-
-    assert len(df) > 0
+from src.preprocessing import (
+    validate_dataframe,
+    clean_text_columns,
+    handle_missing_values,
+    encode_categorical_variables
+)
 
 
-def test_target_column_exists():
-    """Check that target column exists."""
+def test_handle_missing_values_numeric():
+    df = pd.DataFrame({
+        "age": [50, np.nan, 60],
+        "chol": [200, 240, np.nan]
+    })
 
-    df = pd.read_csv(
-        "data/processed/cleaned_heart_disease.csv"
-    )
+    result = handle_missing_values(df)
 
-    assert "num" in df.columns
+    assert result.isnull().sum().sum() == 0
 
 
-def test_no_missing_values():
-    """Check that dataset has no missing values."""
+def test_handle_missing_values_categorical():
+    df = pd.DataFrame({
+        "sex": ["male", np.nan, "male"],
+        "cp": ["asymptomatic", "typical", np.nan]
+    })
 
-    df = pd.read_csv(
-        "data/processed/cleaned_heart_disease.csv"
-    )
+    result = handle_missing_values(df)
 
-    assert df.isnull().sum().sum() == 0
+    assert result.isnull().sum().sum() == 0
+
+
+def test_encode_categorical_variables():
+    df = pd.DataFrame({
+        "sex": ["female", "male"],
+        "cp": ["typical", "asymptomatic"]
+    })
+
+    result = encode_categorical_variables(df)
+
+    assert "sex_male" in result.columns
+
+
+def test_clean_text_columns():
+    df = pd.DataFrame({
+        "sex": [" Male ", " FEMALE "]
+    })
+
+    result = clean_text_columns(df)
+
+    assert result["sex"].tolist() == ["male", "female"]
+
+
+def test_function_does_not_modify_original_dataframe():
+    df = pd.DataFrame({
+        "sex": [" Male ", " FEMALE "]
+    })
+
+    original_df = df.copy(deep=True)
+
+    clean_text_columns(df)
+
+    pd.testing.assert_frame_equal(df, original_df)
+
+
+def test_invalid_input_raises_type_error():
+    with pytest.raises(TypeError):
+        handle_missing_values("not a dataframe")
+
+
+def test_empty_dataframe_raises_value_error():
+    with pytest.raises(ValueError):
+        handle_missing_values(pd.DataFrame())
