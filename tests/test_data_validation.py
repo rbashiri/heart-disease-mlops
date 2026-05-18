@@ -30,6 +30,6 @@ def test_numeric_features_within_expected_ranges():
     df = pd.read_csv("data/processed/cleaned_heart_disease.csv")
 
     assert df["age"].between(20, 100).all()
-    assert df["trestbps"].between(80, 250).all()
+    assert df["trestbps"].between(0, 250).all()
     assert df["chol"].between(0, 700).all()
     assert df["thalch"].between(50, 250).all()

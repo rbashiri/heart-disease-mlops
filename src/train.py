@@ -109,3 +109,11 @@ os.makedirs("models", exist_ok=True)
 joblib.dump(best_model, "models/best_model.pkl")
 
 print("\nBest model saved to models/best_model.pkl")
+minimum_f1 = 0.80
+
+if best_f1 < minimum_f1:
+    raise ValueError(
+        f"Model F1 score {best_f1:.3f} is below minimum threshold {minimum_f1}"
+    )
+
+print(f"\nModel passed threshold check. Best F1: {best_f1:.3f}")
