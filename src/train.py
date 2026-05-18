@@ -127,3 +127,12 @@ plt.xlabel("Importance")
 plt.savefig("feature_importance.png")
 
 print("\nFeature importance plot saved as feature_importance.png")
+# Save the model
+import os
+import joblib
+
+os.makedirs("models", exist_ok=True)
+
+joblib.dump(rf_model, "models/random_forest_model.pkl")
+
+print("\nRandom Forest model saved to models/random_forest_model.pkl")
