@@ -1,5 +1,4 @@
 # =========================
-# =========================
 # 1. Import Libraries
 # =========================
 
@@ -7,159 +6,167 @@ import os
 import pandas as pd
 import numpy as np
 import warnings
-from sklearn.impute import SimpleImputer
 
 warnings.filterwarnings("ignore")
 
 
 # =========================
-# 2. Load Data
+# 2. Preprocessing Functions
 # =========================
 
-df = pd.read_csv("data/raw/heart_disease_uci.csv")
+def validate_dataframe(df):
+    """Validate that input is a pandas DataFrame."""
+
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
+
+    if df.empty:
+        raise ValueError("Input DataFrame cannot be empty.")
+
+    return True
 
 
-# =========================
-# 3. Basic Data Inspection
-# =========================
+def clean_text_columns(df):
+    """Clean text columns without modifying original dataframe."""
 
-print("First 5 rows:")
-print(df.head())
+    validate_dataframe(df)
 
-print("\nDataset shape:")
-print(df.shape)
+    cleaned_df = df.copy()
 
-print("\nDataset information:")
-print(df.info())
+    cat_cols = cleaned_df.select_dtypes(include=["object"]).columns
 
-print("\nData types:")
-print(df.dtypes)
+    for col in cat_cols:
+        cleaned_df[col] = cleaned_df[col].astype(str)
+        cleaned_df[col] = cleaned_df[col].str.lower()
+        cleaned_df[col] = cleaned_df[col].str.strip()
 
-print("\nSummary statistics:")
-print(df.describe(include="all"))
+    cleaned_df = cleaned_df.replace("nan", np.nan)
 
-
-# =========================
-# 4. Missing Data Check
-# =========================
-
-missing_summary = pd.DataFrame({
-    "missing_count": df.isnull().sum(),
-    "missing_percent": (df.isnull().sum() / len(df)) * 100
-}).sort_values(by="missing_percent", ascending=False)
-
-print("\nMissing Data Summary:")
-print(missing_summary)
+    return cleaned_df
 
 
-# =========================
-# 5. Duplicate Check
-# =========================
+def handle_missing_values(df):
+    """Fill missing values without modifying original dataframe."""
 
-print("\nDuplicate rows before cleaning:")
-print(df.duplicated().sum())
+    validate_dataframe(df)
 
+    cleaned_df = df.copy()
 
-# =========================
-# 6. Identify Categorical Columns
-# =========================
+    cleaned_df = cleaned_df.replace({pd.NA: np.nan})
 
-cat_cols = df.select_dtypes(include=["object"]).columns
+    num_cols = cleaned_df.select_dtypes(include=["int64", "float64"]).columns
 
-print("\nCategorical Columns:")
-print(cat_cols)
+    for col in num_cols:
+        cleaned_df[col] = cleaned_df[col].fillna(cleaned_df[col].median())
 
+    cat_cols = cleaned_df.select_dtypes(include=["object"]).columns
 
-# =========================
-# 7. Clean Text Columns
-# =========================
+    for col in cat_cols:
+        cleaned_df[col] = cleaned_df[col].fillna(cleaned_df[col].mode()[0])
 
-for col in cat_cols:
-    df[col] = df[col].astype(str)
-    df[col] = df[col].str.lower()
-    df[col] = df[col].str.strip()
+    return cleaned_df
 
 
-# =========================
-# 8. Replace string 'nan' back with real missing values
-# =========================
+def encode_categorical_variables(df):
+    """Encode categorical variables without modifying original dataframe."""
 
-df = df.replace("nan", pd.NA)
+    validate_dataframe(df)
+
+    encoded_df = df.copy()
+
+    encoded_df = pd.get_dummies(encoded_df, drop_first=True)
+
+    return encoded_df
 
 
-# =========================
-# 9. Inspect Unique Values
-# =========================
+def remove_duplicates(df):
+    """Remove duplicate rows without modifying original dataframe."""
 
-for col in cat_cols:
-    print(f"\nUnique values in {col}:")
-    print(df[col].unique())
+    validate_dataframe(df)
+
+    cleaned_df = df.copy()
+
+    cleaned_df = cleaned_df.drop_duplicates()
+
+    return cleaned_df
 
 
 # =========================
-# 10. Remove Duplicate Rows
+# 3. Main Preprocessing Pipeline
 # =========================
 
-df = df.drop_duplicates()
+if __name__ == "__main__":
 
-print("\nDuplicate rows after cleaning:")
-print(df.duplicated().sum())
+    # Load raw dataset
+    df = pd.read_csv("data/raw/heart_disease_uci.csv")
 
-print("\nDataset shape after removing duplicates:")
-print(df.shape)
+    print("First 5 rows:")
+    print(df.head())
 
+    print("\nDataset shape:")
+    print(df.shape)
 
-# =========================
-# 11. Identify Numerical Columns
-# =========================
+    print("\nDataset information:")
+    print(df.info())
 
-num_cols = df.select_dtypes(include=["int64", "float64"]).columns
+    print("\nData types:")
+    print(df.dtypes)
 
-print("\nNumerical Columns:")
-print(num_cols)
+    print("\nSummary statistics:")
+    print(df.describe(include="all"))
 
+    # Missing data summary before cleaning
+    missing_summary = pd.DataFrame({
+        "missing_count": df.isnull().sum(),
+        "missing_percent": (df.isnull().sum() / len(df)) * 100
+    }).sort_values(by="missing_percent", ascending=False)
 
-# =========================
-# 12. Fill Missing Values
-# =========================
+    print("\nMissing Data Summary:")
+    print(missing_summary)
 
-# Replace pandas NA with numpy NaN
-df = df.replace({pd.NA: np.nan})
+    print("\nDuplicate rows before cleaning:")
+    print(df.duplicated().sum())
 
-# Numerical columns -> median
-num_cols = df.select_dtypes(include=["int64", "float64"]).columns
+    print("\nCategorical Columns:")
+    print(df.select_dtypes(include=["object"]).columns)
 
-for col in num_cols:
-    df[col] = df[col].fillna(df[col].median())
+    # Clean text columns
+    df = clean_text_columns(df)
 
+    # Inspect unique values
+    cat_cols = df.select_dtypes(include=["object"]).columns
 
-# Categorical columns -> most frequent value
-cat_cols = df.select_dtypes(include=["object"]).columns
+    for col in cat_cols:
+        print(f"\nUnique values in {col}:")
+        print(df[col].unique())
 
-for col in cat_cols:
-    df[col] = df[col].fillna(df[col].mode()[0])
+    # Remove duplicate rows
+    df = remove_duplicates(df)
 
+    print("\nDuplicate rows after cleaning:")
+    print(df.duplicated().sum())
 
-# =========================
-# 13. Confirm Missing Values Removed
-# =========================
+    print("\nDataset shape after removing duplicates:")
+    print(df.shape)
 
-print("\nMissing values after cleaning:")
-print(df.isnull().sum())
+    print("\nNumerical Columns:")
+    print(df.select_dtypes(include=["int64", "float64"]).columns)
 
-print("\nTotal missing values after cleaning:")
-print(df.isnull().sum().sum())
+    # Fill missing values
+    df = handle_missing_values(df)
 
+    print("\nMissing values after cleaning:")
+    print(df.isnull().sum())
 
-# =========================
-# 14. Save Cleaned Dataset
-# =========================
+    print("\nTotal missing values after cleaning:")
+    print(df.isnull().sum().sum())
 
-os.makedirs("data/processed", exist_ok=True)
+    # Save cleaned dataset
+    os.makedirs("data/processed", exist_ok=True)
 
-df.to_csv(
-    "data/processed/cleaned_heart_disease.csv",
-    index=False
-)
+    df.to_csv(
+        "data/processed/cleaned_heart_disease.csv",
+        index=False
+    )
 
-print("\nCleaned dataset saved successfully.")
+    print("\nCleaned dataset saved successfully.")
